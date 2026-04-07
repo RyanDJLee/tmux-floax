@@ -73,7 +73,11 @@ tmux_popup() {
     current_dir=$(tmux display -p '#{pane_current_path}')
     scratch_path=$(tmux display -t "$FLOAX_SESSION_NAME" -p '#{pane_current_path}')
     if [ "$scratch_path" != "$current_dir" ] && [ "$FLOAX_CHANGE_PATH" = "true" ]; then
-        tmux send-keys -R -t "$FLOAX_SESSION_NAME" " cd \"$current_dir\"" C-m
+        # Only send cd keystrokes if the scratch pane is running a shell, not nvim/etc.
+        scratch_cmd=$(tmux display -t "$FLOAX_SESSION_NAME" -p '#{pane_current_command}')
+        case "$scratch_cmd" in
+            bash|zsh|fish|sh|dash) tmux send-keys -R -t "$FLOAX_SESSION_NAME" " cd \"$current_dir\"" C-m ;;
+        esac
     fi
 
     if is_tmux_version_supported; then
